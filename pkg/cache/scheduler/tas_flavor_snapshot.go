@@ -389,6 +389,12 @@ func (s *TASFlavorSnapshot) tasUsagePerDomain() map[utiltas.TopologyDomainID]res
 	tasUsagePerDomain := make(map[utiltas.TopologyDomainID]resources.Requests, len(s.leaves))
 
 	for domainID, leaf := range s.leaves {
+		if leaf.tasUsage == nil {
+			// A leaf holds no usage until the first TAS workload lands on it,
+			// and callers iterate the returned value unconditionally.
+			tasUsagePerDomain[domainID] = resources.CreateEmpty()
+			continue
+		}
 		tasUsagePerDomain[domainID] = leaf.tasUsage.Clone()
 	}
 

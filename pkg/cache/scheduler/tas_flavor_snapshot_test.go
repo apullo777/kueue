@@ -75,6 +75,29 @@ func TestFreeCapacityPerDomain(t *testing.T) {
 	}
 }
 
+func TestSerializeFreeCapacityPerDomainWithoutTASUsage(t *testing.T) {
+	// A leaf has no TAS usage until the first TAS workload lands on it.
+	snapshot := &TASFlavorSnapshot{
+		leaves: leafDomainByID{
+			"domain1": &leafDomain{
+				freeCapacity: resources.NewRequestsFromMap(resources.MapRequests{
+					corev1.ResourceCPU: 2000,
+				}),
+			},
+		},
+	}
+
+	const expected = `{"domain1":{"freeCapacity":{"cpu":"2"},"tasUsage":{}}}`
+
+	got, err := snapshot.SerializeFreeCapacityPerDomain()
+	if err != nil {
+		t.Fatalf("SerializeFreeCapacityPerDomain() unexpected error: %v", err)
+	}
+	if diff := cmp.Diff(expected, got); diff != "" {
+		t.Errorf("SerializeFreeCapacityPerDomain() mismatch (-expected +got):\n%s", diff)
+	}
+}
+
 func TestMergeTopologyAssignments(t *testing.T) {
 	nodes := []corev1.Node{
 		*node.MakeNode("x").Label("level-1", "a").Label("level-2", "b").Obj(),
